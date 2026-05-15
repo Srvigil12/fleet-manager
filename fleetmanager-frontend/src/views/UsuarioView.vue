@@ -128,7 +128,7 @@ const iconoAzul = crearIcono('blue');
 // --- FUNCIONES DE VEHÍCULOS ---
 const cargarVehiculos = async () => {
   try {
-    const data = await api.getVehiculos(); // [cite: 82, 115]
+    const data = await api.getVehiculos(); 
     vehiculos.value = data;
     actualizarMapa();
   } catch (error) {

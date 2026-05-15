@@ -143,6 +143,8 @@ import { ref, onMounted, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { api } from '../services/api';
+
 
 const route = useRoute(); 
 const router = useRouter();
@@ -170,20 +172,17 @@ const OPENCAGE_KEY = '9585c88d5e604d57b2bb360359642da6';
 // --- FUNCIONES ---
 const cargarDetalles = async () => {
   try {
-    const res = await fetch(`http://localhost:3000/api/vehiculos/${vehiculoId}`, { credentials: 'include' });
-    if (res.ok) {
-      vehiculo.value = await res.json();
-      
-      // Precargar datos para la devolución
-      latDevolucion.value = vehiculo.value.latitud; 
-      lngDevolucion.value = vehiculo.value.longitud;
-      
-      if (vehiculo.value.latitud && vehiculo.value.longitud) {
-        traducirCoordenadas(vehiculo.value.latitud, vehiculo.value.longitud);
-        nextTick(() => { 
-          inicializarMapaPequeno(vehiculo.value.latitud, vehiculo.value.longitud); 
-        });
-      }
+    const data = await api.getVehiculo(vehiculoId);
+    vehiculo.value = data;
+    
+    latDevolucion.value = vehiculo.value.latitud; 
+    lngDevolucion.value = vehiculo.value.longitud;
+    
+    if (vehiculo.value.latitud && vehiculo.value.longitud) {
+      traducirCoordenadas(vehiculo.value.latitud, vehiculo.value.longitud);
+      nextTick(() => { 
+        inicializarMapaPequeno(vehiculo.value.latitud, vehiculo.value.longitud); 
+      });
     }
   } catch (error) {
     console.error("Error al cargar detalles:", error);
@@ -261,34 +260,26 @@ const inicializarMapaPequeno = (lat, lng) => {
 
 const devolverVehiculo = async () => {
   try {
-    const res = await fetch(`http://localhost:3000/api/vehiculos/${vehiculoId}/devolver`, { 
-      method: 'POST', 
-      headers: { 'Content-Type': 'application/json' }, 
-      credentials: 'include', 
-      body: JSON.stringify({ 
-        latitud: latDevolucion.value, 
-        longitud: lngDevolucion.value, 
-        incidenciaTexto: incidenciaDevolucion.value 
-      }) 
+    await api.devolverVehiculo(vehiculoId, { 
+      latitud: latDevolucion.value, 
+      longitud: lngDevolucion.value, 
+      incidenciaTexto: incidenciaDevolucion.value 
     });
     
-    if (res.ok) { 
-      alert('Vehículo devuelto. ¡Gracias por usar FleetManager!'); 
-      incidenciaDevolucion.value = ''; 
-      cargarDetalles(); 
-      cargarIncidencias(); 
-    } else {
-      alert('Error al devolver el vehículo.');
-    }
+    alert('Vehículo devuelto. ¡Gracias por usar FleetManager!'); 
+    incidenciaDevolucion.value = ''; 
+    cargarDetalles(); 
+    cargarIncidencias(); 
   } catch (error) {
     console.error("Error al devolver:", error);
+    alert('Error al devolver el vehículo: ' + error.message);
   }
 };
 
 const cargarIncidencias = async () => { 
   try { 
-    const res = await fetch(`http://localhost:3000/api/incidencias/vehiculo/${vehiculoId}`, { credentials: 'include' }); 
-    if (res.ok) incidencias.value = await res.json(); 
+    const data = await api.getIncidenciasVehiculo(vehiculoId);
+    incidencias.value = data; 
   } catch (e) {
     console.error(e);
   } 
@@ -296,22 +287,17 @@ const cargarIncidencias = async () => {
 
 const enviarIncidencia = async () => {
   try {
-    const res = await fetch('http://localhost:3000/api/incidencias', { 
-      method: 'POST', 
-      headers: { 'Content-Type': 'application/json' }, 
-      credentials: 'include', 
-      body: JSON.stringify({ 
-        texto: nuevaIncidencia.value, 
-        vehiculoId: parseInt(vehiculoId) 
-      }) 
+    await api.crearIncidencia({ 
+      texto: nuevaIncidencia.value, 
+      vehiculoId: parseInt(vehiculoId) 
     });
-    if (res.ok) { 
-      alert('Incidencia reportada correctamente.'); 
-      nuevaIncidencia.value = ''; 
-      cargarIncidencias(); 
-    }
+    
+    alert('Incidencia reportada correctamente.'); 
+    nuevaIncidencia.value = ''; 
+    cargarIncidencias(); 
   } catch (e) {
     console.error(e);
+    alert('Error al reportar incidencia');
   }
 };
 
