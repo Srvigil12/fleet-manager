@@ -83,193 +83,113 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import emailjs from '@emailjs/browser';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import { api } from '../services/api'; 
 
 const router = useRouter();
 
-// --- ESTADOS ---
+// Estados
 const vehiculos = ref([]);
 const direccion = ref('');
-const coordenadasUsuario = ref(null);
 const buscando = ref(false);
 const monedaActual = ref('EUR');
-const tasaCambio = ref(1); 
+const cambioDolar = 1.08; 
 
-// --- MAPA ---
+// Referencia al mapa (Leaflet)
 let map = null;
-let marcadores = [];
-let marcadorUsuario = null;
+let markers = [];
 
-// --- CLAVES REALES ---
-const KEYS = { 
-  OPENCAGE: '9585c88d5e604d57b2bb360359642da6', 
-  EMAILJS_SERVICE: 'service_fqyxezk', 
-  EMAILJS_TEMPLATE: 'template_913ls1t', 
-  EMAILJS_PUBLIC: 'K823OOXIYOTnbIdcf' 
-};
-
-// --- ICONOS DEL MAPA ---
-const crearIcono = (color) => new L.Icon({ 
-  iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`, 
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', 
-  iconSize: [25, 41], 
-  iconAnchor: [12, 41], 
-  popupAnchor: [1, -34], 
-  shadowSize: [41, 41] 
-});
-const iconoVerde = crearIcono('green'); 
-const iconoRojo = crearIcono('red'); 
-const iconoAzul = crearIcono('blue');
-
-// --- FUNCIONES DE VEHÍCULOS ---
 const cargarVehiculos = async () => {
   try {
-    const res = await fetch('http://localhost:3000/api/vehiculos', { credentials: 'include' });
-    if (res.ok) { 
-      vehiculos.value = await res.json(); 
-      actualizarMarcadores(); 
-    } else { 
-      if(res.status === 401 || res.status === 403) router.push('/'); 
-    }
-  } catch (error) { 
-    console.error('Error al cargar vehículos:', error); 
+    const data = await api.getVehiculos();
+    vehiculos.value = data;
+    actualizarMapa();
+  } catch (error) {
+    console.error("Error al cargar vehículos:", error);
+    alert("No se pudieron cargar los vehículos. Revisa la conexión con el servidor.");
   }
 };
 
-// --- FUNCIONES DE MAPA ---
 const inicializarMapa = () => {
-  const centro = coordenadasUsuario.value || { lat: 37.3891, lng: -5.9845 }; 
-  map = L.map('map').setView([centro.lat, centro.lng], coordenadasUsuario.value ? 14 : 12);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-  actualizarMarcadores();
+  // Coordenadas por defecto (Sevilla)
+  map = L.map('map').setView([37.3891, -5.9845], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(map);
 };
 
-const actualizarMarcadores = () => {
+const actualizarMapa = () => {
   if (!map) return;
   
-  // Limpiamos los anteriores
-  marcadores.forEach(m => map.removeLayer(m));
-  marcadores = [];
-  
-  // Añadimos los nuevos
+  markers.forEach(m => map.removeLayer(m));
+  markers = [];
+
   vehiculos.value.forEach(coche => {
     if (coche.latitud && coche.longitud) {
-      const icono = coche.estado === 'disponible' ? iconoVerde : iconoRojo;
-      const marker = L.marker([coche.latitud, coche.longitud], { icon: icono }).addTo(map);
-      marker.bindPopup(`
-        <div style="font-family: sans-serif;">
-          <h4 style="margin: 0 0 5px 0; color: #4F46E5;">${coche.modelo}</h4>
-          <p style="margin:0;">${coche.precioHora}€/h</p>
-        </div>
-      `);
-      marcadores.push(marker);
+      const marker = L.marker([coche.latitud, coche.longitud])
+        .addTo(map)
+        .bindPopup(`
+          <b>${coche.modelo}</b><br>
+          Estado: ${coche.estado}<br>
+          <button onclick="window.location.hash='#/vehiculo/${coche.id}'">Ver Detalles</button>
+        `);
+      markers.push(marker);
     }
   });
 };
 
 const buscarUbicacion = async () => {
-  if (!direccion.value) return alert("Introduce una dirección");
+  if (!direccion.value) return;
   buscando.value = true;
   try {
-    const res = await fetch(`https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(direccion.value)}&key=${KEYS.OPENCAGE}`);
-    const data = await res.json();
-    
-    if (data.results && data.results.length > 0) {
-      const { lat, lng } = data.results[0].geometry;
-      coordenadasUsuario.value = { lat, lng };
-      
-      // Mover el mapa a la nueva ubicación
-      if (map) {
-        map.setView([lat, lng], 14);
-        if (marcadorUsuario) map.removeLayer(marcadorUsuario);
-        marcadorUsuario = L.marker([lat, lng], { icon: iconoAzul }).addTo(map).bindPopup("<b>Tu ubicación</b>").openPopup();
-      }
-      
-      // Recalcular distancias a todos los coches
-      vehiculos.value.forEach(coche => {
-        if(coche.latitud && coche.longitud) {
-          coche.distancia = calcularDistancia(lat, lng, coche.latitud, coche.longitud);
-        }
-      });
-      // Ordenar por cercanía
-      vehiculos.value.sort((a, b) => (a.distancia || 9999) - (b.distancia || 9999));
-    } else { 
-      alert("No se encontró la dirección."); 
+    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion.value)}`);
+    const data = await response.json();
+    if (data.length > 0) {
+      const { lat, lon } = data[0];
+      map.setView([lat, lon], 15);
+    } else {
+      alert("No se encontró la dirección");
     }
-  } catch (error) { 
-    console.error("Error geocodificando:", error); 
-  } finally { 
-    buscando.value = false; 
-  }
-};
-
-const calcularDistancia = (lat1, lon1, lat2, lon2) => {
-  const R = 6371; 
-  const dLat = (lat2 - lat1) * Math.PI / 180; 
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) + 
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-  return R * c;
-};
-
-// --- FUNCIONES EXTRA (Divisas, Reservas, Navegación) ---
-const cambiarDivisa = async () => {
-  if (monedaActual.value === 'EUR') { 
-    tasaCambio.value = 1; 
-    return; 
-  }
-  try {
-    const res = await fetch('https://open.er-api.com/v6/latest/EUR');
-    const data = await res.json(); 
-    tasaCambio.value = data.rates[monedaActual.value];
-  } catch (error) { 
-    console.error("Error al obtener divisas:", error);
-    monedaActual.value = 'EUR'; 
+  } catch (error) {
+    console.error("Error en geocodificación:", error);
+  } finally {
+    buscando.value = false;
   }
 };
 
 const hacerReserva = async (coche) => {
-  if (!confirm(`¿Quieres reservar el ${coche.modelo} por ${(coche.precioHora * tasaCambio.value).toFixed(2)}${monedaActual.value}/h?`)) return;
   try {
-    const res = await fetch('http://localhost:3000/api/reservas', { 
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', 
-      body: JSON.stringify({ idVehiculo: coche.id }) 
-    });
-    
-    if (res.ok) {
-      const templateParams = { 
-        to_name: localStorage.getItem('usuarioNombre') || "Conductor", 
-        to_email: localStorage.getItem('usuarioEmail'), // El email real del usuario
-        modelo_coche: coche.modelo, 
-        precio: `${coche.precioHora} EUR/h` 
-      };
-      
-      try { await emailjs.send(KEYS.EMAILJS_SERVICE, KEYS.EMAILJS_TEMPLATE, templateParams, KEYS.EMAILJS_PUBLIC); } catch (e) { console.error("Error enviando email:", e); }
-      alert('¡Reserva confirmada! Revisa tu bandeja de entrada.'); 
-      cargarVehiculos();
-    } else { 
-      alert('El coche ya no está disponible.'); 
-    }
-  } catch (error) { console.error('Error:', error); }
+    await api.crearReserva({ vehiculoId: coche.id });
+    alert(`Reserva confirmada para: ${coche.modelo}`);
+    cargarVehiculos(); 
+  } catch (error) {
+    alert(error.message || "Error al realizar la reserva");
+  }
 };
 
-const verDetalles = (id) => { 
-  router.push(`/vehiculo/${id}`); 
+const cambiarDivisa = () => {
+  // La lógica de conversión se maneja en el template con una función computada o método
+  console.log("Cambiando divisa a:", monedaActual.value);
 };
 
-const cerrarSesion = () => { 
-  localStorage.removeItem('usuarioId'); 
-  localStorage.removeItem('usuarioRol'); 
-  router.push('/'); 
+const formatearPrecio = (precio) => {
+  if (monedaActual.value === 'USD') {
+    return (precio * cambioDolar).toFixed(2) + ' $';
+  }
+  return precio.toFixed(2) + ' €';
 };
 
-// --- INICIO ---
-onMounted(() => { 
-  cargarVehiculos(); 
-  inicializarMapa(); 
+const cerrarSesion = () => {
+  document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+  router.push('/login');
+};
+
+const verDetalle = (id) => {
+  router.push(`/vehiculo/${id}`);
+};
+
+onMounted(() => {
+  inicializarMapa();
+  cargarVehiculos();
 });
 </script>
 

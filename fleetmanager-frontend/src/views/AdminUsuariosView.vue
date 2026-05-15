@@ -32,12 +32,12 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { api } from '../services/api';
 
 const usuarios = ref([]);
 
 const cargarUsuarios = async () => {
-  const res = await fetch('http://localhost:3000/api/usuarios');
-  usuarios.value = await res.json();
+  usuarios.value = await api.getUsuarios();
 };
 
 const validarConductor = async (id) => {
