@@ -1,5 +1,4 @@
-const API_URL = 'https://fleet-manager-3b93.onrender.com/api';
-
+const API_URL = import.meta.env.VITE_API_URL || 'https://fleet-manager-3b93.onrender.com/api';
 async function fetchAPI(endpoint, options = {}) {
   const defaultOptions = {
     headers: { 'Content-Type': 'application/json' },
