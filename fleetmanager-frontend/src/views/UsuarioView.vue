@@ -86,6 +86,8 @@ import { useRouter } from 'vue-router';
 import emailjs from '@emailjs/browser';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { api } from '../services/api';
+
 
 const router = useRouter();
 
