@@ -41,8 +41,12 @@ const cargarUsuarios = async () => {
 };
 
 const validarConductor = async (id) => {
-  await fetch(`http://localhost:3000/api/usuarios/${id}/validar`, { method: 'PUT' });
-  cargarUsuarios(); 
+  try {
+    await api.validarConductor(id);
+    cargarUsuarios();
+  } catch (error) {
+    console.error('Error validando conductor', error);
+  }
 };
 
 onMounted(() => {
