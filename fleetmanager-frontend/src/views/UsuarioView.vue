@@ -86,8 +86,7 @@ import { useRouter } from 'vue-router';
 import emailjs from '@emailjs/browser';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { api } from '../services/api';
-
+import { api } from '../services/api'; 
 
 const router = useRouter();
 
@@ -128,11 +127,13 @@ const iconoAzul = crearIcono('blue');
 // --- FUNCIONES DE VEHÍCULOS ---
 const cargarVehiculos = async () => {
   try {
-    const data = await api.getVehiculos(); 
-    vehiculos.value = data;
-    actualizarMapa();
-  } catch (error) {
-    console.error("Error al cargar vehículos:", error);
+    vehiculos.value = await api.getVehiculos();
+    actualizarMarcadores(); 
+  } catch (error) { 
+    console.error('Error al cargar vehículos:', error);
+    if(error.message.includes('Acceso denegado') || error.message.includes('inválida')) {
+      router.push('/');
+    }
   }
 };
 
@@ -230,12 +231,29 @@ const cambiarDivisa = async () => {
 };
 
 const hacerReserva = async (coche) => {
+  if (!confirm(`¿Quieres reservar el ${coche.modelo} por ${(coche.precioHora * tasaCambio.value).toFixed(2)}${monedaActual.value}/h?`)) return;
   try {
-    await api.crearReserva({ idVehiculo: coche.id }); 
-    alert(`Reserva confirmada`);
+    await api.crearReserva({ idVehiculo: coche.id });
+    
+    const templateParams = { 
+      to_name: localStorage.getItem('usuarioNombre') || "Conductor", 
+      to_email: localStorage.getItem('usuarioEmail'), 
+      modelo_coche: coche.modelo, 
+      precio: `${coche.precioHora} EUR/h` 
+    };
+    
+    try { 
+      await emailjs.send(KEYS.EMAILJS_SERVICE, KEYS.EMAILJS_TEMPLATE, templateParams, KEYS.EMAILJS_PUBLIC); 
+    } catch (e) { 
+      console.error("Error enviando email:", e); 
+    }
+    
+    alert('¡Reserva confirmada! Revisa tu bandeja de entrada.'); 
     cargarVehiculos();
-  } catch (error) {
-    alert(error.message);
+    
+  } catch (error) { 
+    console.error('Error:', error);
+    alert(error.message || 'Error al hacer la reserva.');
   }
 };
 
@@ -244,8 +262,12 @@ const verDetalles = (id) => {
 };
 
 const cerrarSesion = () => { 
+  // Limpiamos los datos locales y cookies de sesión
   localStorage.removeItem('usuarioId'); 
-  localStorage.removeItem('usuarioRol'); 
+  localStorage.removeItem('usuarioRol');
+  localStorage.removeItem('usuarioNombre');
+  localStorage.removeItem('usuarioEmail');
+  document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"; 
   router.push('/'); 
 };
 
