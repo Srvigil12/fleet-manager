@@ -12,5 +12,13 @@ const sequelize = new Sequelize(process.env.DATABASE_URL, {
   },
   logging: false 
 });
+const connectSQL = async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('🔵 Conectado a MySQL (Vehículos)');
+  } catch (error) {
+    console.error('🔴 Error conectando a MySQL:', error);
+  }
+};
 
 module.exports = { sequelize, connectSQL };
