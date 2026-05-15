@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'https://fleet-manager-3b93.onrender.com/api';
 
 async function fetchAPI(endpoint, options = {}) {
   const defaultOptions = {
