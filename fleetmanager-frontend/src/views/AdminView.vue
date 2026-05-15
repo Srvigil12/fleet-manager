@@ -3,9 +3,11 @@
     <nav class="navbar-admin">
       <div class="nav-content">
         <h1 class="nav-brand">
-          <i class="fa-solid fa-shield-halved"></i> Panel Admin FleetManager
+          <i class="fa-solid fa-shield-halved" style="margin-right: 8px;"></i>Admin FleetManager
         </h1>
-        <button class="btn-logout" @click="cerrarSesion">Cerrar Sesión</button>
+        <button class="btn-logout" @click="cerrarSesion">
+          <i class="fa-solid fa-right-from-bracket" style="margin-right: 6px;"></i>Cerrar Sesión
+        </button>
       </div>
     </nav>
 
@@ -14,185 +16,467 @@
         
         <section class="dashboard-panel">
           <div class="panel-header">
-            <h3><i class="fa-solid fa-id-card-clip"></i> Validación de Conductores</h3>
+            <h3><i class="fa-solid fa-id-card-clip" style="color: var(--brand-primary); margin-right: 8px;"></i>Validación de Conductores</h3>
           </div>
+          <div class="table-responsive">
+            <table class="table-modern">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Licencia</th>
+                  <th>Estado</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="user in usuarios" :key="user._id">
+                  <td class="fw-bold">{{ user.nombre }}</td>
+                  <td>{{ user.licencia }}</td>
+                  <td>
+                    <span :class="user.validado ? 'badge-success' : 'badge-warning'">
+                      {{ user.validado ? 'Validado' : 'Pendiente' }}
+                    </span>
+                  </td>
+                  <td>
+                    <button v-if="!user.validado" class="btn-xs btn-success" @click="validarConductor(user._id)">
+                      <i class="fa-solid fa-check" style="margin-right: 4px;"></i>Aprobar
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="dashboard-panel">
+          <div class="panel-header header-flex">
+            <h3><i class="fa-solid fa-car" style="color: var(--brand-primary); margin-right: 8px;"></i>Gestión de Flota</h3>
+            <button class="btn-sm btn-brand" @click="abrirModalNuevo">
+              <i class="fa-solid fa-plus" style="margin-right: 4px;"></i>Nuevo Vehículo
+            </button>
+          </div>
+          <ul class="lista-flota">
+            <li v-for="coche in vehiculos" :key="coche.id" class="flota-item">
+              <div class="flota-info">
+                <span class="flota-id">#{{ coche.id }}</span>
+                <span class="flota-modelo">{{ coche.modelo }}</span>
+                <span class="flota-km">{{ coche.km }} km</span>
+                <span :class="['badge-sm', coche.estado.replace(' ', '-')]">{{ coche.estado }}</span>
+              </div>
+              <div class="flota-acciones">
+                <button class="btn-xs btn-outline" @click="abrirModalEditar(coche)">
+                  <i class="fa-solid fa-pen" style="margin-right: 4px;"></i>Editar
+                </button>
+                <button class="btn-xs btn-danger" @click="eliminarVehiculo(coche.id)">
+                  <i class="fa-solid fa-trash" style="margin-right: 4px;"></i>Borrar
+                </button>
+              </div>
+            </li>
+          </ul>
+        </section>
+      </div>
+
+      <section class="dashboard-panel panel-full">
+        <div class="panel-header">
+          <h3><i class="fa-solid fa-calendar-check" style="color: var(--brand-primary); margin-right: 8px;"></i>Historial de Reservas</h3>
+        </div>
+        <div class="table-responsive">
           <table class="table-modern">
             <thead>
               <tr>
-                <th>Nombre</th>
+                <th>Fecha</th>
+                <th>Conductor</th>
+                <th>ID Vehículo</th>
                 <th>Estado</th>
-                <th>Acción</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="user in usuarios" :key="user._id">
-                <td>{{ user.nombre }}</td>
-                <td>
-                  <span :class="['badge', user.validado ? 'success' : 'warning']">
-                    {{ user.validado ? 'Validado' : 'Pendiente' }}
-                  </span>
+              <tr v-for="reserva in reservas" :key="reserva._id">
+                <td>{{ new Date(reserva.fechaReserva).toLocaleString() }}</td>
+                <td class="fw-bold">
+                  {{ reserva.usuarioId ? `${reserva.usuarioId.nombre} (${reserva.usuarioId.licencia})` : 'Usuario eliminado' }}
                 </td>
+                <td><span class="tag-id">#{{ reserva.vehiculoId }}</span></td>
                 <td>
-                  <button v-if="!user.validado" @click="validarConductor(user._id)" class="btn-sm">Validar</button>
+                  <span :class="reserva.estado === 'activa' ? 'badge-warning' : 'badge-success'">
+                    {{ reserva.estado.toUpperCase() }}
+                  </span>
                 </td>
               </tr>
             </tbody>
           </table>
-        </section>
+        </div>
+      </section>
 
-        <section class="dashboard-panel">
-          <div class="panel-header">
-            <h3><i class="fa-solid fa-triangle-exclamation"></i> Incidencias Recientes</h3>
-          </div>
-          <div class="incidencias-lista">
-            <div v-for="inc in incidencias" :key="inc._id" class="incidencia-card">
-              <p><strong>Vehículo ID:</strong> {{ inc.vehiculoId }}</p>
-              <p>{{ inc.texto }}</p>
-              <div class="incidencia-acciones" v-if="inc.estado === 'pendiente'">
-                <button @click="responderIncidencia(inc._id, 'resuelta')" class="btn-res">Resolver</button>
-                <button @click="responderIncidencia(inc._id, 'rechazada')" class="btn-rech">Rechazar</button>
-              </div>
-              <span v-else class="status-text">{{ inc.estado }}</span>
-            </div>
-          </div>
-        </section>
-      </div>
-
-      <section class="dashboard-panel mt-20">
+      <section class="dashboard-panel panel-full">
         <div class="panel-header">
-          <h3><i class="fa-solid fa-car"></i> Gestión de Flota</h3>
+          <h3><i class="fa-solid fa-wrench" style="color: var(--brand-primary); margin-right: 8px;"></i>Centro de Incidencias Taller</h3>
+        </div>
+        <div class="table-responsive">
+          <table class="table-modern">
+            <thead>
+              <tr>
+                <th>Vehículo</th>
+                <th>Reporte del Cliente</th>
+                <th>Estado</th>
+                <th>Resolución Técnica</th>
+                <th>Acciones Taller</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="inc in incidencias" :key="inc._id">
+                <td><span class="tag-id">#{{ inc.vehiculoId }}</span></td>
+                <td class="texto-problema" :title="inc.texto">{{ inc.texto }}</td>
+                <td><span :class="['badge-sm', inc.estado]">{{ inc.estado }}</span></td>
+                <td>
+                  <input 
+                    v-if="inc.estado === 'pendiente'" 
+                    v-model="respuestasPendientes[inc._id]" 
+                    placeholder="Escribe la reparación..." 
+                    class="input-taller" 
+                  />
+                  <span v-else class="texto-resolucion">
+                    {{ inc.respuestaAdmin || 'Cerrada sin comentarios' }}
+                  </span>
+                </td>
+                <td class="td-acciones">
+                  <div v-if="inc.estado === 'pendiente'" class="flex-gap">
+                    <button class="btn-xs btn-success" @click="actualizarIncidencia(inc._id, 'resuelta', respuestasPendientes[inc._id])">
+                      <i class="fa-solid fa-check" style="margin-right: 4px;"></i>Resolver
+                    </button>
+                    <button class="btn-xs btn-danger-outline" @click="actualizarIncidencia(inc._id, 'rechazada', 'Falsa alarma')">
+                      <i class="fa-solid fa-xmark" style="margin-right: 4px;"></i>Rechazar
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <div v-if="mostrarModal" class="modal-overlay">
+      <div class="modal-content modal-largo">
+        <div class="modal-header">
+          <h3>
+            <i :class="cocheEditando ? 'fa-solid fa-pen-to-square' : 'fa-solid fa-car-side'" style="color: var(--brand-primary); margin-right: 8px;"></i>
+            {{ cocheEditando ? 'Actualizar Ficha Técnica' : 'Alta de Nuevo Vehículo' }}
+          </h3>
+          <button type="button" class="btn-cerrar-modal" @click="cerrarModal">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
         </div>
         
-        <div class="form-agregar">
-          <input v-model="nuevoVehiculo.modelo" placeholder="Modelo del coche" />
-          <input v-model.number="nuevoVehiculo.precioHora" type="number" placeholder="Precio/Hora" />
-          <select v-model="nuevoVehiculo.motor">
-            <option value="gasolina">Gasolina</option>
-            <option value="eléctrico">Eléctrico</option>
-            <option value="híbrido">Híbrido</option>
-          </select>
-          <button @click="agregarVehiculo" class="btn-add">Añadir Vehículo</button>
-        </div>
+        <form @submit.prevent="guardarVehiculo" class="formulario-modal">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Modelo:</label>
+              <input v-model="formVehiculo.modelo" placeholder="Ej: Toyota Corolla" required />
+            </div>
+            <div class="form-group">
+              <label>URL Imagen:</label>
+              <input v-model="formVehiculo.imagen" placeholder="https://..." />
+            </div>
+          </div>
 
-        <table class="table-modern">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Modelo</th>
-              <th>Precio</th>
-              <th>Estado</th>
-              <th>Eliminar</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="car in vehiculos" :key="car.id">
-              <td>#{{ car.id }}</td>
-              <td>{{ car.modelo }}</td>
-              <td>{{ car.precioHora }}€/h</td>
-              <td>{{ car.estado }}</td>
-              <td>
-                <button @click="eliminarVehiculo(car.id)" class="btn-del">
-                  <i class="fa-solid fa-trash"></i>
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
+          <div class="vista-previa-contenedor" v-if="formVehiculo.imagen">
+            <img :src="formVehiculo.imagen" class="img-previa" @error="imagenError" alt="Vista previa del vehículo" />
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Precio Tarifa (€/h):</label>
+              <input v-model="formVehiculo.precioHora" type="number" step="0.01" required />
+            </div>
+            <div class="form-group">
+              <label>Estado Operativo:</label>
+              <select v-model="formVehiculo.estado">
+                <option value="disponible">Disponible</option>
+                <option value="reservado">Reservado</option>
+                <option value="en taller">En taller</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Tipo de Motor:</label>
+              <select v-model="formVehiculo.motor">
+                <option value="gasolina">Gasolina</option>
+                <option value="diésel">Diésel</option>
+                <option value="eléctrico">Eléctrico</option>
+                <option value="híbrido">Híbrido</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Odómetro (km):</label>
+              <input v-model="formVehiculo.km" type="number" required />
+            </div>
+          </div>
+          
+          <div class="seccion-gris">
+            <h4><i class="fa-solid fa-map-location-dot" style="margin-right: 8px;"></i>Punto de Estacionamiento</h4>
+            <div class="buscador-direccion">
+              <input 
+                v-model="direccionBusqueda" 
+                type="text" 
+                placeholder="Calle, Número, CP, Ciudad..." 
+                @keyup.enter.prevent="buscarDireccionAdmin" 
+              />
+              <button type="button" class="btn-sm btn-outline" @click="buscarDireccionAdmin">
+                <i class="fa-solid fa-magnifying-glass" style="margin-right: 5px;"></i>Buscar Coordenadas
+              </button>
+            </div>
+            <p class="ayuda-texto">Arrastra el marcador o haz clic en el mapa para ajustar la posición.</p>
+            <div id="mapa-admin" class="mapa-admin-container"></div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label>Latitud:</label>
+                <input v-model="formVehiculo.latitud" type="number" step="any" readonly class="input-readonly" />
+              </div>
+              <div class="form-group">
+                <label>Longitud:</label>
+                <input v-model="formVehiculo.longitud" type="number" step="any" readonly class="input-readonly" />
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-acciones">
+            <button type="button" class="btn-ghost-dark" @click="cerrarModal">
+              <i class="fa-solid fa-ban" style="margin-right: 5px;"></i>Cancelar
+            </button>
+            <button type="submit" class="btn-brand">
+              <i class="fa-solid fa-floppy-disk" style="margin-right: 5px;"></i>{{ cocheEditando ? 'Guardar Cambios' : 'Dar de Alta' }}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
-import { api } from '../services/api'; 
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { api } from '../services/api';
+
 
 const router = useRouter();
 
-// ESTADOS
+const OPENCAGE_KEY = '9585c88d5e604d57b2bb360359642da6';
+
+// Estados
 const usuarios = ref([]);
 const vehiculos = ref([]);
 const incidencias = ref([]);
-const nuevoVehiculo = ref({
-  modelo: '',
-  precioHora: 0,
-  motor: 'gasolina',
-  imagen: '',
-  latitud: 37.3891,
-  longitud: -5.9845
+const reservas = ref([]);
+const respuestasPendientes = ref({});
+const mostrarModal = ref(false);
+const cocheEditando = ref(null);
+const formVehiculo = ref({ 
+  modelo: '', 
+  imagen: '', 
+  precioHora: '', 
+  estado: 'disponible', 
+  latitud: 37.3891, 
+  longitud: -5.9845, 
+  km: 0, 
+  motor: 'gasolina' 
 });
 
-const cargarDatos = async () => {
+// Mapa y búsqueda
+const direccionBusqueda = ref('');
+let mapAdmin = null;
+let markerAdmin = null;
+
+// --- FUNCIONES DE BASE DE DATOS ---
+
+const cargarUsuarios = async () => {
   try {
-    const [resUsuarios, resVehiculos, resIncidencias] = await Promise.all([
-      api.getUsuarios(),
-      api.getVehiculos(),
-      api.getIncidencias()
-    ]);
-    
-    usuarios.value = resUsuarios;
-    vehiculos.value = resVehiculos;
-    incidencias.value = resIncidencias;
+    usuarios.value = await api.getUsuarios();
   } catch (error) {
-    console.error("Error al cargar datos del panel de control:", error);
+    console.error('Error cargando usuarios', error);
   }
 };
 
 const validarConductor = async (id) => {
   try {
     await api.validarConductor(id);
-    alert("Conductor validado correctamente");
-    await cargarDatos(); 
+    cargarUsuarios();
   } catch (error) {
-    alert("Error al validar: " + error.message);
+    console.error('Error validando conductor', error);
   }
 };
 
-const agregarVehiculo = async () => {
+const cargarVehiculos = async () => {
   try {
-    await api.crearVehiculo(nuevoVehiculo.value);
-    alert("Vehículo añadido con éxito");
-    nuevoVehiculo.value = { modelo: '', precioHora: 0, motor: 'gasolina', imagen: '', latitud: 37.3891, longitud: -5.9845 };
-    await cargarDatos(); 
+    vehiculos.value = await api.getVehiculos();
   } catch (error) {
-    alert("Error al añadir vehículo");
+    console.error('Error cargando vehículos', error);
   }
 };
 
 const eliminarVehiculo = async (id) => {
-  if (!confirm("¿Estás seguro de eliminar este vehículo?")) return;
+  if (!confirm('¿Seguro que deseas eliminar este vehículo?')) return;
   try {
     await api.eliminarVehiculo(id);
-    await cargarDatos();
+    cargarVehiculos();
   } catch (error) {
-    alert("Error al eliminar");
+    console.error('Error eliminando vehículo', error);
   }
 };
 
-const responderIncidencia = async (id, estado) => {
-  const respuesta = prompt("Escribe una respuesta para el usuario:");
-  if (respuesta === null) return;
-
+const cargarIncidencias = async () => {
   try {
-    await api.actualizarIncidencia(id, {
-      estado: estado,
-      respuestaAdmin: respuesta
-    });
-    alert("Incidencia actualizada");
-    await cargarDatos();
+    incidencias.value = await api.getIncidencias();
   } catch (error) {
-    alert("Error al actualizar incidencia");
+    console.error('Error cargando incidencias', error);
+  }
+};
+
+const actualizarIncidencia = async (id, nuevoEstado, respuesta = '') => {
+  try {
+    await api.actualizarIncidencia(id, nuevoEstado, respuesta);
+    cargarIncidencias();
+  } catch (error) {
+    console.error("Error al actualizar incidencia:", error);
+  }
+};
+
+const cargarReservas = async () => {
+  try {
+    reservas.value = await api.getReservas();
+  } catch (error) {
+    console.error('Error cargando reservas', error);
+  }
+};
+
+// --- FUNCIONES DEL MAPA Y MODAL ---
+
+const inicializarMapaModal = () => {
+  const lat = formVehiculo.value.latitud || 37.3891;
+  const lng = formVehiculo.value.longitud || -5.9845;
+
+  if (mapAdmin) {
+    mapAdmin.remove();
+    mapAdmin = null;
+  }
+
+  mapAdmin = L.map('mapa-admin').setView([lat, lng], 15);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapAdmin);
+
+  const iconoRojo = new L.Icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41]
+  });
+
+  markerAdmin = L.marker([lat, lng], { icon: iconoRojo, draggable: true }).addTo(mapAdmin);
+
+  // Al arrastrar el marcador
+  markerAdmin.on('dragend', () => {
+    const p = markerAdmin.getLatLng();
+    formVehiculo.value.latitud = parseFloat(p.lat.toFixed(6));
+    formVehiculo.value.longitud = parseFloat(p.lng.toFixed(6));
+  });
+
+  // Al hacer clic en el mapa
+  mapAdmin.on('click', (e) => {
+    markerAdmin.setLatLng(e.latlng);
+    formVehiculo.value.latitud = parseFloat(e.latlng.lat.toFixed(6));
+    formVehiculo.value.longitud = parseFloat(e.latlng.lng.toFixed(6));
+  });
+};
+
+const buscarDireccionAdmin = async () => {
+  if (!direccionBusqueda.value) return;
+  try {
+    const res = await fetch(`https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(direccionBusqueda.value)}&key=${OPENCAGE_KEY}&language=es`);
+    const data = await res.json();
+    if (data.results && data.results.length > 0) {
+      const { lat, lng } = data.results[0].geometry;
+      formVehiculo.value.latitud = lat;
+      formVehiculo.value.longitud = lng;
+      
+      if (mapAdmin && markerAdmin) {
+        mapAdmin.setView([lat, lng], 16);
+        markerAdmin.setLatLng([lat, lng]);
+      }
+    } else {
+      alert("Dirección no encontrada.");
+    }
+  } catch (error) {
+    console.error('Error buscando dirección:', error);
+  }
+};
+
+const imagenError = (e) => {
+  e.target.src = 'https://via.placeholder.com/600x200?text=Error+de+Imagen';
+};
+
+const abrirModalNuevo = () => {
+  cocheEditando.value = null;
+  formVehiculo.value = { 
+    modelo: '', 
+    imagen: '', 
+    precioHora: '', 
+    estado: 'disponible', 
+    latitud: 37.3891, 
+    longitud: -5.9845, 
+    km: 0, 
+    motor: 'gasolina' 
+  };
+  direccionBusqueda.value = '';
+  mostrarModal.value = true;
+  nextTick(() => inicializarMapaModal());
+};
+
+const abrirModalEditar = (coche) => {
+  cocheEditando.value = coche;
+  formVehiculo.value = { ...coche };
+  direccionBusqueda.value = '';
+  mostrarModal.value = true;
+  nextTick(() => inicializarMapaModal());
+};
+
+const cerrarModal = () => {
+  mostrarModal.value = false;
+  if (mapAdmin) {
+    mapAdmin.remove();
+    mapAdmin = null;
+  }
+};
+
+const guardarVehiculo = async () => {
+  try {
+    if (cocheEditando.value) {
+      await api.actualizarVehiculo(cocheEditando.value.id, formVehiculo.value);
+    } else {
+      await api.crearVehiculo(formVehiculo.value);
+    }
+    cerrarModal();
+    cargarVehiculos();
+  } catch (error) {
+    console.error('Error guardando vehículo:', error);
   }
 };
 
 const cerrarSesion = () => {
-  document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-  router.push('/login');
+  localStorage.removeItem('usuarioId');
+  localStorage.removeItem('usuarioRol');
+  router.push('/');
 };
 
 onMounted(() => {
-  cargarDatos();
+  cargarUsuarios();
+  cargarVehiculos();
+  cargarIncidencias();
+  cargarReservas();
 });
 </script>
 
