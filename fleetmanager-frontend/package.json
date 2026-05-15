@@ -11,11 +11,15 @@
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
     "leaflet": "^1.9.4",
+    "sweetalert2": "^11.26.24",
     "vue": "^3.5.29",
     "vue-router": "^5.0.3"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.4",
+    "autoprefixer": "^10.5.0",
+    "postcss": "^8.5.14",
+    "tailwindcss": "^3.4.19",
     "vite": "^7.3.1",
     "vite-plugin-vue-devtools": "^8.0.6"
   },

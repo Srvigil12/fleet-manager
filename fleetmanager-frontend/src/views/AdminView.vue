@@ -2,8 +2,12 @@
   <div class="layout-app">
     <nav class="navbar-admin">
       <div class="nav-content">
-        <h1 class="nav-brand">⚙️ Admin FleetManager</h1>
-        <button class="btn-logout" @click="cerrarSesion">Cerrar Sesión</button>
+        <h1 class="nav-brand">
+          <i class="fa-solid fa-shield-halved" style="margin-right: 8px;"></i>Admin FleetManager
+        </h1>
+        <button class="btn-logout" @click="cerrarSesion">
+          <i class="fa-solid fa-right-from-bracket" style="margin-right: 6px;"></i>Cerrar Sesión
+        </button>
       </div>
     </nav>
 
@@ -12,7 +16,7 @@
         
         <section class="dashboard-panel">
           <div class="panel-header">
-            <h3>Validación de Conductores</h3>
+            <h3><i class="fa-solid fa-id-card-clip" style="color: var(--brand-primary); margin-right: 8px;"></i>Validación de Conductores</h3>
           </div>
           <div class="table-responsive">
             <table class="table-modern">
@@ -35,7 +39,7 @@
                   </td>
                   <td>
                     <button v-if="!user.validado" class="btn-xs btn-success" @click="validarConductor(user._id)">
-                      Aprobar
+                      <i class="fa-solid fa-check" style="margin-right: 4px;"></i>Aprobar
                     </button>
                   </td>
                 </tr>
@@ -46,8 +50,10 @@
 
         <section class="dashboard-panel">
           <div class="panel-header header-flex">
-            <h3>Gestión de Flota</h3>
-            <button class="btn-sm btn-brand" @click="abrirModalNuevo">+ Nuevo Vehículo</button>
+            <h3><i class="fa-solid fa-car" style="color: var(--brand-primary); margin-right: 8px;"></i>Gestión de Flota</h3>
+            <button class="btn-sm btn-brand" @click="abrirModalNuevo">
+              <i class="fa-solid fa-plus" style="margin-right: 4px;"></i>Nuevo Vehículo
+            </button>
           </div>
           <ul class="lista-flota">
             <li v-for="coche in vehiculos" :key="coche.id" class="flota-item">
@@ -58,8 +64,12 @@
                 <span :class="['badge-sm', coche.estado.replace(' ', '-')]">{{ coche.estado }}</span>
               </div>
               <div class="flota-acciones">
-                <button class="btn-xs btn-outline" @click="abrirModalEditar(coche)">Editar</button>
-                <button class="btn-xs btn-danger" @click="eliminarVehiculo(coche.id)">Borrar</button>
+                <button class="btn-xs btn-outline" @click="abrirModalEditar(coche)">
+                  <i class="fa-solid fa-pen" style="margin-right: 4px;"></i>Editar
+                </button>
+                <button class="btn-xs btn-danger" @click="eliminarVehiculo(coche.id)">
+                  <i class="fa-solid fa-trash" style="margin-right: 4px;"></i>Borrar
+                </button>
               </div>
             </li>
           </ul>
@@ -68,7 +78,7 @@
 
       <section class="dashboard-panel panel-full">
         <div class="panel-header">
-          <h3>Historial de Reservas</h3>
+          <h3><i class="fa-solid fa-calendar-check" style="color: var(--brand-primary); margin-right: 8px;"></i>Historial de Reservas</h3>
         </div>
         <div class="table-responsive">
           <table class="table-modern">
@@ -100,7 +110,7 @@
 
       <section class="dashboard-panel panel-full">
         <div class="panel-header">
-          <h3>Centro de Incidencias Taller</h3>
+          <h3><i class="fa-solid fa-wrench" style="color: var(--brand-primary); margin-right: 8px;"></i>Centro de Incidencias Taller</h3>
         </div>
         <div class="table-responsive">
           <table class="table-modern">
@@ -132,10 +142,10 @@
                 <td class="td-acciones">
                   <div v-if="inc.estado === 'pendiente'" class="flex-gap">
                     <button class="btn-xs btn-success" @click="actualizarIncidencia(inc._id, 'resuelta', respuestasPendientes[inc._id])">
-                      ✔ Resolver
+                      <i class="fa-solid fa-check" style="margin-right: 4px;"></i>Resolver
                     </button>
                     <button class="btn-xs btn-danger-outline" @click="actualizarIncidencia(inc._id, 'rechazada', 'Falsa alarma')">
-                      ✖ Rechazar
+                      <i class="fa-solid fa-xmark" style="margin-right: 4px;"></i>Rechazar
                     </button>
                   </div>
                 </td>
@@ -149,8 +159,13 @@
     <div v-if="mostrarModal" class="modal-overlay">
       <div class="modal-content modal-largo">
         <div class="modal-header">
-          <h3>{{ cocheEditando ? 'Actualizar Ficha Técnica' : 'Alta de Nuevo Vehículo' }}</h3>
-          <button type="button" class="btn-cerrar-modal" @click="cerrarModal">✖</button>
+          <h3>
+            <i :class="cocheEditando ? 'fa-solid fa-pen-to-square' : 'fa-solid fa-car-side'" style="color: var(--brand-primary); margin-right: 8px;"></i>
+            {{ cocheEditando ? 'Actualizar Ficha Técnica' : 'Alta de Nuevo Vehículo' }}
+          </h3>
+          <button type="button" class="btn-cerrar-modal" @click="cerrarModal">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
         </div>
         
         <form @submit.prevent="guardarVehiculo" class="formulario-modal">
@@ -201,7 +216,7 @@
           </div>
           
           <div class="seccion-gris">
-            <h4>Punto de Estacionamiento</h4>
+            <h4><i class="fa-solid fa-map-location-dot" style="margin-right: 8px;"></i>Punto de Estacionamiento</h4>
             <div class="buscador-direccion">
               <input 
                 v-model="direccionBusqueda" 
@@ -210,10 +225,10 @@
                 @keyup.enter.prevent="buscarDireccionAdmin" 
               />
               <button type="button" class="btn-sm btn-outline" @click="buscarDireccionAdmin">
-                Buscar Coordenadas
+                <i class="fa-solid fa-magnifying-glass" style="margin-right: 5px;"></i>Buscar Coordenadas
               </button>
             </div>
-            <p class="ayuda-texto">💡 Arrastra el marcador o haz clic en el mapa para ajustar la posición.</p>
+            <p class="ayuda-texto">Arrastra el marcador o haz clic en el mapa para ajustar la posición.</p>
             <div id="mapa-admin" class="mapa-admin-container"></div>
             
             <div class="form-row">
@@ -229,9 +244,11 @@
           </div>
 
           <div class="modal-acciones">
-            <button type="button" class="btn-ghost-dark" @click="cerrarModal">Cancelar</button>
+            <button type="button" class="btn-ghost-dark" @click="cerrarModal">
+              <i class="fa-solid fa-ban" style="margin-right: 5px;"></i>Cancelar
+            </button>
             <button type="submit" class="btn-brand">
-              {{ cocheEditando ? 'Guardar Cambios' : 'Dar de Alta' }}
+              <i class="fa-solid fa-floppy-disk" style="margin-right: 5px;"></i>{{ cocheEditando ? 'Guardar Cambios' : 'Dar de Alta' }}
             </button>
           </div>
         </form>
@@ -248,7 +265,6 @@ import 'leaflet/dist/leaflet.css';
 
 const router = useRouter();
 
-// Tu clave de OpenCage
 const OPENCAGE_KEY = '9585c88d5e604d57b2bb360359642da6';
 
 // Estados
@@ -473,7 +489,6 @@ const cerrarSesion = () => {
   router.push('/');
 };
 
-// --- INICIO ---
 onMounted(() => {
   cargarUsuarios();
   cargarVehiculos();

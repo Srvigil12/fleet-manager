@@ -12,15 +12,15 @@ const { connectSQL, sequelize } = require('./config/sql');
 const Usuario = require('./models/Usuario');
 const Vehiculo = require('./models/Vehiculo');
 const Incidencia = require('./models/Incidencia');
-const Reserva = require('./models/Reserva'); // <-- NUEVO MODELO IMPORTADO
+const Reserva = require('./models/Reserva');
 
 const { verificarToken, esAdmin } = require('./middleware/auth');
 
 const app = express();
 
 app.use(cors({
-  origin: 'http://localhost:5173', 
-  credentials: true 
+  origin: 'http://localhost:5173',
+  credentials: true
 }));
 
 app.use(express.json());
@@ -44,12 +44,12 @@ sequelize.sync({ alter: true }).then(async () => {
 });
 
 const calcularDistanciaKM = (lat1, lon1, lat2, lon2) => {
-  const R = 6371; 
+  const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c; 
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
 };
 
 
@@ -81,14 +81,13 @@ app.post('/api/auth/login', async (req, res) => {
 
     const token = jwt.sign({ id: usuario._id, rol: usuario.rol }, process.env.JWT_SECRET, { expiresIn: '1d' });
     res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 24 * 60 * 60 * 1000 });
-    
-    // AQUÍ ESTÁ EL CAMBIO: Ahora mandamos también el nombre y el email al frontend
-    res.json({ 
-      id: usuario._id, 
-      nombre: usuario.nombre, 
-      email: usuario.email, 
-      rol: usuario.rol, 
-      validado: usuario.validado 
+
+    res.json({
+      id: usuario._id,
+      nombre: usuario.nombre,
+      email: usuario.email,
+      rol: usuario.rol,
+      validado: usuario.validado
     });
   } catch (error) { res.status(500).json({ error: 'Error en el servidor' }); }
 });
@@ -131,17 +130,14 @@ app.get('/api/vehiculos/:id', verificarToken, async (req, res) => {
   } catch (error) { res.status(500).json({ error: 'Error al cargar el coche' }); }
 });
 
-// NUEVA LÓGICA DE RESERVAS
 app.post('/api/reservas', verificarToken, async (req, res) => {
   try {
     const v = await Vehiculo.findByPk(req.body.idVehiculo);
     if (!v || v.estado !== 'disponible') return res.status(400).json({ error: 'No disponible' });
-    
-    // 1. Cambiamos el estado del coche
-    v.estado = 'reservado'; 
-    await v.save(); 
 
-    // 2. CREAMOS EL REGISTRO DE LA RESERVA
+    v.estado = 'reservado';
+    await v.save();
+
     const nuevaReserva = new Reserva({
       usuarioId: req.usuario.id,
       vehiculoId: v.id
@@ -179,7 +175,6 @@ app.post('/api/vehiculos/:id/devolver', verificarToken, async (req, res) => {
     vehiculo.estado = 'disponible';
     await vehiculo.save();
 
-    // FINALIZAMOS LA RESERVA ACTIVA
     const reserva = await Reserva.findOne({ vehiculoId: vehiculo.id, estado: 'activa' });
     if (reserva) {
       reserva.estado = 'finalizada';
@@ -217,7 +212,7 @@ app.get('/api/incidencias/vehiculo/:vehiculoId', verificarToken, async (req, res
 
 app.put('/api/incidencias/:id', verificarToken, esAdmin, async (req, res) => {
   try {
-    const { estado, respuestaAdmin } = req.body; 
+    const { estado, respuestaAdmin } = req.body;
     const incidencia = await Incidencia.findByIdAndUpdate(req.params.id, { estado, respuestaAdmin }, { new: true });
     res.json({ incidencia });
   } catch (error) { res.status(500).json({ error: 'Error al actualizar' }); }

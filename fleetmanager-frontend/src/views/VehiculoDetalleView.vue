@@ -8,39 +8,43 @@
 
     <div class="detalle-container" v-if="vehiculo">
       <header class="cabecera-detalle">
-        <button class="btn-ghost" @click="router.push('/usuario')">← Volver al Catálogo</button>
+        <button class="btn-ghost" @click="router.push('/usuario')">
+          <i class="fa-solid fa-arrow-left" style="margin-right: 8px;"></i> Volver al Catálogo
+        </button>
       </header>
 
       <div class="contenido-principal">
         
         <section class="panel-coche card-style">
           <img :src="vehiculo.imagen || 'https://via.placeholder.com/600x400?text=Coche'" alt="Foto coche" class="img-detalle" />
-          <h2 class="titulo-coche">{{ vehiculo.modelo }}</h2>
+          <h2 class="titulo-coche">
+            <i class="fa-solid fa-car-side" style="color: var(--brand-primary); margin-right: 8px;"></i> {{ vehiculo.modelo }}
+          </h2>
           
           <div class="grid-info">
             <div class="info-item">
-              <span class="icono">🔋</span>
+              <span class="icono"><i class="fa-solid fa-car-battery" style="color: #64748b;"></i></span>
               <div>
                 <strong>Motor</strong>
                 <p class="valor-info">{{ vehiculo.motor }}</p>
               </div>
             </div>
             <div class="info-item">
-              <span class="icono">🛣️</span>
+              <span class="icono"><i class="fa-solid fa-road" style="color: #64748b;"></i></span>
               <div>
                 <strong>Kms Totales</strong>
                 <p class="valor-info">{{ vehiculo.km }} km</p>
               </div>
             </div>
             <div class="info-item">
-              <span class="icono">💶</span>
+              <span class="icono"><i class="fa-solid fa-euro-sign" style="color: #64748b;"></i></span>
               <div>
                 <strong>Tarifa</strong>
                 <p class="valor-info">{{ vehiculo.precioHora }} €/h</p>
               </div>
             </div>
             <div class="info-item">
-              <span class="icono">🚦</span>
+              <span class="icono"><i class="fa-solid fa-traffic-light" style="color: #64748b;"></i></span>
               <div>
                 <strong>Estado</strong>
                 <p><span :class="['badge-estado', vehiculo.estado.replace(' ', '-')]">{{ vehiculo.estado }}</span></p>
@@ -49,8 +53,12 @@
           </div>
 
           <div class="seccion-ubicacion">
-            <h3 class="seccion-titulo" v-if="vehiculo.estado === 'reservado'">📍 Destino de aparcamiento</h3>
-            <h3 class="seccion-titulo" v-else>📍 Ubicación Actual</h3>
+            <h3 class="seccion-titulo" v-if="vehiculo.estado === 'reservado'">
+              <i class="fa-solid fa-location-dot" style="color: #ef4444; margin-right: 8px;"></i> Destino de aparcamiento
+            </h3>
+            <h3 class="seccion-titulo" v-else>
+              <i class="fa-solid fa-location-dot" style="color: #ef4444; margin-right: 8px;"></i> Ubicación Actual
+            </h3>
             
             <div v-if="vehiculo.estado === 'reservado'" class="buscador-direccion">
               <input 
@@ -59,7 +67,9 @@
                 placeholder="Calle, ciudad o arrastra el mapa..." 
                 @keyup.enter.prevent="buscarDireccionDevolucion" 
               />
-              <button class="btn-brand" @click="buscarDireccionDevolucion">Buscar</button>
+              <button class="btn-brand" @click="buscarDireccionDevolucion">
+                <i class="fa-solid fa-magnifying-glass" style="margin-right: 5px;"></i> Buscar
+              </button>
             </div>
             <p v-else class="direccion-texto">{{ direccionReal || 'Cargando ubicación exacta...' }}</p>
 
@@ -70,7 +80,7 @@
         <section class="columna-derecha">
           
           <div v-if="vehiculo.estado === 'reservado'" class="card-style bloque-devolucion">
-            <h3 class="titulo-destacado">🏁 Finalizar Viaje</h3>
+            <h3 class="titulo-destacado"><i class="fa-solid fa-flag-checkered" style="margin-right: 8px;"></i> Finalizar Viaje</h3>
             <p class="desc-devolucion">Mueve el marcador rojo del mapa hasta el lugar exacto donde has estacionado el coche.</p>
             
             <label class="label-incidencia">¿Algún daño o incidencia reportable? (Opcional)</label>
@@ -81,25 +91,25 @@
             ></textarea>
             
             <button class="btn-success btn-full" @click="devolverVehiculo">
-              Confirmar Devolución del Vehículo
+              <i class="fa-solid fa-check" style="margin-right: 8px;"></i> Confirmar Devolución del Vehículo
             </button>
           </div>
 
           <div class="card-style panel-incidencias">
             <div v-if="vehiculo.estado !== 'reservado'">
-              <h3 class="seccion-titulo">Reportar Avería</h3>
+              <h3 class="seccion-titulo"><i class="fa-solid fa-triangle-exclamation" style="color: var(--brand-primary); margin-right: 8px;"></i> Reportar Avería</h3>
               <textarea 
                 v-model="nuevaIncidencia" 
                 class="textarea-moderno" 
                 placeholder="Describe el problema detectado antes o durante tu revisión del coche..."
               ></textarea>
               <button class="btn-brand btn-full" @click="enviarIncidencia" :disabled="!nuevaIncidencia">
-                Enviar Reporte Oficial
+                <i class="fa-solid fa-paper-plane" style="margin-right: 8px;"></i> Enviar Reporte Oficial
               </button>
               <hr class="divisor" />
             </div>
 
-            <h3 class="seccion-titulo">Historial Técnico</h3>
+            <h3 class="seccion-titulo"><i class="fa-solid fa-clipboard-list" style="margin-right: 8px;"></i> Historial Técnico</h3>
             <ul class="lista-incidencias" v-if="incidencias.length > 0">
               <li v-for="inc in incidencias" :key="inc._id" class="tarjeta-incidencia">
                 <div class="cabecera-inc">
@@ -114,7 +124,7 @@
               </li>
             </ul>
             <div v-else class="sin-incidencias">
-              <span class="icono-ok">✨</span>
+              <span class="icono-ok"><i class="fa-solid fa-shield-halved"></i></span>
               <p>Vehículo en perfecto estado. Sin incidencias previas registradas.</p>
             </div>
           </div>
@@ -123,7 +133,7 @@
     </div>
     
     <div v-else class="cargando">
-      Cargando ficha técnica del vehículo...
+      <i class="fa-solid fa-spinner fa-spin" style="margin-right: 8px;"></i> Cargando ficha técnica del vehículo...
     </div>
   </div>
 </template>

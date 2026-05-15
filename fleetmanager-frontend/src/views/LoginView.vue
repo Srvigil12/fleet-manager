@@ -2,21 +2,23 @@
   <div class="auth-wrapper">
     <div class="auth-card">
       <div class="brand-logo">
-        <span class="icon">🚙</span>
+        <span class="icon"><i class="fa-solid fa-car-side" style="color: var(--brand-primary);"></i></span>
         <h1>FleetManager</h1>
       </div>
       <p class="subtitle">Bienvenido de nuevo</p>
 
       <form @submit.prevent="iniciarSesion" class="form-container">
         <div class="input-group">
-          <label>Correo Electrónico</label>
+          <label><i class="fa-solid fa-envelope" style="margin-right: 8px; color: #64748b;"></i>Correo Electrónico</label>
           <input v-model="email" type="email" placeholder="tu@email.com" required />
         </div>
         <div class="input-group">
-          <label>Contraseña</label>
+          <label><i class="fa-solid fa-lock" style="margin-right: 8px; color: #64748b;"></i>Contraseña</label>
           <input v-model="password" type="password" placeholder="••••••••" required />
         </div>
-        <button type="submit" class="btn-brand">Iniciar Sesión</button>
+        <button type="submit" class="btn-brand">
+          <i class="fa-solid fa-right-to-bracket" style="margin-right: 8px;"></i>Iniciar Sesión
+        </button>
       </form>
       <p class="enlace-footer">¿No tienes cuenta? <router-link to="/register">Regístrate aquí</router-link></p>
     </div>
@@ -26,6 +28,7 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { api } from '../services/api'; 
 
 const router = useRouter();
 const email = ref('');
@@ -33,32 +36,21 @@ const password = ref('');
 
 const iniciarSesion = async () => {
   try {
-    const res = await fetch('http://localhost:3000/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ email: email.value, password: password.value })
-    });
+    const data = await api.login({ email: email.value, password: password.value });
     
-    if (res.ok) {
-      const data = await res.json();
-      localStorage.setItem('usuarioId', data.id); 
-      localStorage.setItem('usuarioRol', data.rol); 
-      localStorage.setItem('usuarioNombre', data.nombre); 
-      localStorage.setItem('usuarioEmail', data.email); 
-      
-      if (data.rol === 'admin') {
-        router.push('/admin'); 
-      } else {
-        router.push('/usuario'); 
-      }
+    localStorage.setItem('usuarioId', data.id); 
+    localStorage.setItem('usuarioRol', data.rol); 
+    localStorage.setItem('usuarioNombre', data.nombre); 
+    localStorage.setItem('usuarioEmail', data.email); 
+    
+    if (data.rol === 'admin') {
+      router.push('/admin'); 
     } else {
-      const errorData = await res.json();
-      alert(errorData.error || "Credenciales incorrectas");
+      router.push('/usuario'); 
     }
   } catch (error) { 
     console.error("Error al iniciar sesión:", error); 
-    alert("Error de conexión con el servidor.");
+    alert(error.message || "Error de conexión con el servidor.");
   }
 };
 </script>

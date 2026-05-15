@@ -2,34 +2,34 @@
   <div class="auth-wrapper">
     <div class="auth-card">
       <header class="brand-logo">
-        <span class="icon">🚙</span>
+        <span class="icon"><i class="fa-solid fa-user-plus" style="color: var(--brand-primary);"></i></span>
         <h2>Únete a FleetManager</h2>
       </header>
       <p class="subtitle">Crea tu cuenta y empieza a conducir.</p>
 
       <form @submit.prevent="registrarUsuario" class="form-container">
         <div class="input-group">
-          <label>Nombre completo</label>
+          <label><i class="fa-solid fa-user" style="margin-right: 8px; color: #64748b;"></i>Nombre completo</label>
           <input v-model="form.nombre" type="text" placeholder="Ej: Juan Pérez" required />
         </div>
         
         <div class="input-group">
-          <label>Correo electrónico</label>
+          <label><i class="fa-solid fa-envelope" style="margin-right: 8px; color: #64748b;"></i>Correo electrónico</label>
           <input v-model="form.email" type="email" placeholder="tu@email.com" required />
         </div>
         
         <div class="input-group">
-          <label>Contraseña</label>
+          <label><i class="fa-solid fa-lock" style="margin-right: 8px; color: #64748b;"></i>Contraseña</label>
           <input v-model="form.password" type="password" placeholder="Crea una contraseña segura" required />
         </div>
         
         <div class="input-row">
           <div class="input-group">
-            <label>Nº de Carnet</label>
+            <label><i class="fa-solid fa-id-card" style="margin-right: 8px; color: #64748b;"></i>Nº de Carnet</label>
             <input v-model="form.licencia" type="text" placeholder="12345678A" required />
           </div>
           <div class="input-group">
-            <label>Perfil</label>
+            <label><i class="fa-solid fa-users-gear" style="margin-right: 8px; color: #64748b;"></i>Perfil</label>
             <select v-model="form.rol" required>
               <option value="estandar">Conductor</option>
               <option value="admin">Administrador</option>
@@ -41,6 +41,7 @@
         <div v-if="exito" class="alerta exito">{{ exito }}</div>
 
         <button type="submit" class="btn-brand" :disabled="cargando">
+          <span v-if="!cargando"><i class="fa-solid fa-check" style="margin-right: 8px;"></i></span>
           {{ cargando ? 'Registrando...' : 'Completar Registro' }}
         </button>
       </form>
@@ -55,10 +56,10 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { api } from '../services/api';
 
 const router = useRouter();
 
-// Estado del formulario
 const form = ref({ 
   nombre: '', 
   email: '', 
@@ -76,7 +77,6 @@ const registrarUsuario = async () => {
   exito.value = '';
   cargando.value = true;
 
-  // Validación rápida del carnet antes de enviarlo al servidor
   const regexCarnet = /^[0-9]{8}[A-Za-z]$/;
   if (!regexCarnet.test(form.value.licencia)) {
     error.value = "El formato de carnet es inválido (8 números y 1 letra).";
@@ -85,25 +85,15 @@ const registrarUsuario = async () => {
   }
 
   try {
-    const res = await fetch('http://localhost:3000/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form.value)
-    });
+    await api.register(form.value);
 
-    const data = await res.json();
-
-    if (res.ok) {
-      exito.value = "¡Registro exitoso! Redirigiendo al login...";
-      setTimeout(() => {
-        router.push('/'); 
-      }, 2000);
-    } else {
-      error.value = data.error || "Hubo un problema al registrar el usuario.";
-    }
+    exito.value = "¡Registro exitoso! Redirigiendo al login...";
+    setTimeout(() => {
+      router.push('/'); 
+    }, 2000);
   } catch (err) {
-    console.error("Error conectando con el servidor:", err);
-    error.value = "Error de conexión. Asegúrate de que el backend está encendido.";
+    console.error("Error al registrar:", err);
+    error.value = err.message || "Error de conexión con el servidor.";
   } finally {
     cargando.value = false;
   }
