@@ -1,17 +1,17 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
-const sequelize = new Sequelize(
-  process.env.SQL_DATABASE, 
-  process.env.SQL_USER, 
-  process.env.SQL_PASSWORD, 
-  {
-    host: process.env.SQL_HOST,
-    dialect: 'mysql',
-    logging: false 
-  }
-);
-
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
+  dialect: 'postgres', // ESTO DEBE DECIR POSTGRES
+  protocol: 'postgres',
+  dialectOptions: {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false 
+    }
+  },
+  logging: false 
+});
 const connectSQL = async () => {
   try {
     await sequelize.authenticate();
