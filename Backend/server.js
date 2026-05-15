@@ -19,10 +19,11 @@ const { verificarToken, esAdmin } = require('./middleware/auth');
 const app = express();
 
 app.use(cors({
-  origin: '*',
-  credentials: true
+  origin: 'https://fleet-manager-1-q7pg.onrender.com', 
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
-
 app.use(express.json());
 app.use(cookieParser());
 
@@ -80,7 +81,7 @@ app.post('/api/auth/login', async (req, res) => {
     if (!esPasswordValida) return res.status(401).json({ error: 'Credenciales incorrectas' });
 
     const token = jwt.sign({ id: usuario._id, rol: usuario.rol }, process.env.JWT_SECRET, { expiresIn: '1d' });
-    res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 24 * 60 * 60 * 1000 });
+    res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'none', maxAge: 24 * 60 * 60 * 1000 });
 
     res.json({
       id: usuario._id,
